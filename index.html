@@ -65,6 +65,11 @@
   .rowlink:hover{color:var(--ink)}
   .goal{font-size:12px; color:var(--muted); margin-bottom:16px; font-variant-numeric:tabular-nums}
   .goal b{color:var(--ink); font-weight:700}
+  .gauge{margin-bottom:16px}
+  .gauge .track{height:3px; background:var(--line); border-radius:2px; overflow:hidden}
+  .gauge .fill{height:100%; background:var(--ink)}
+  .gauge .stat{display:flex; justify-content:space-between; align-items:baseline; margin-top:9px; font-size:12px; color:var(--muted); gap:10px}
+  .gauge .stat .raised{color:var(--ink); font-weight:700; font-variant-numeric:tabular-nums}
   .support{display:inline-flex; align-items:center; gap:8px; font-family:var(--sans); font-size:14px; font-weight:700;
     cursor:pointer; background:var(--accent); color:var(--on-accent); border:0; padding:12px 20px; border-radius:8px}
   .support .amt{font-weight:600; opacity:.8; font-size:12.5px}
@@ -185,8 +190,22 @@
       '<div class="state"><div class="big">'+esc(big)+'</div>'+(small?esc(small):'')+'</div>';
   }
 
-  function render(d){
+  function render(d, tips){
+    tips = tips || [];
+    var agg = {};
+    tips.forEach(function(t){
+      var k = t.item_name || '';
+      if(!agg[k]) agg[k] = { sum:0, count:0 };
+      agg[k].sum += Number(t.amount) || 0;
+      agg[k].count += 1;
+    });
+
     var items = (d.items||[]).map(function(it){
+      var a = agg[it.name] || { sum:0, count:0 };
+      var pct = it.price>0 ? Math.min(100, Math.round(a.sum / it.price * 100)) : (a.sum>0 ? 100 : 0);
+      var gauge = '<div class="gauge"><div class="track"><div class="fill" style="width:'+pct+'%"></div></div>'+
+        '<div class="stat"><span><span class="raised">'+yen(a.sum)+'</span> 集まっています</span>'+
+        '<span>'+(it.price>0 ? ('目標 '+yen(it.price)+' ・ ') : '')+a.count+'人が応援</span></div></div>';
       return '<article class="item">'+
         '<div class="plate">'+svgFor(it.category)+'</div>'+
         (it.brand ? '<div class="brand">'+esc(String(it.brand).toUpperCase())+'</div>' : '')+
@@ -194,7 +213,7 @@
         (it.price>0 ? '<div class="price">'+yen(it.price)+'</div>' : '')+
         (it.story ? '<p class="story">'+esc(it.story).replace(/\n/g,'<br>')+'</p>' : '')+
         (/^https?:\/\//.test(it.url||'') ? '<a class="rowlink" href="'+esc(it.url)+'" target="_blank" rel="noopener noreferrer">商品ページ ↗</a><br>' : '')+
-        (it.price>0 ? '<div class="goal">目標 <b>'+yen(it.price)+'</b></div>' : '')+
+        gauge+
         '<button class="support" data-item="'+esc(it.name)+'">この一点を応援する <span class="amt">¥500〜</span></button>'+
       '</article>';
     }).join('');
@@ -222,12 +241,14 @@
   function load(){
     var slug = new URLSearchParams(location.search).get('slug');
     if(!slug){ showState('リストが指定されていません', 'アプリから公開したリンクを開いてください。'); return; }
-    fetch(SUPA_URL+'/rest/v1/public_lists?slug=eq.'+encodeURIComponent(slug)+'&select=data',
-      { headers:{ apikey:KEY, Authorization:'Bearer '+KEY } })
-    .then(function(r){ return r.json(); })
-    .then(function(rows){
+    var h = { apikey:KEY, Authorization:'Bearer '+KEY };
+    Promise.all([
+      fetch(SUPA_URL+'/rest/v1/public_lists?slug=eq.'+encodeURIComponent(slug)+'&select=data', { headers:h }).then(function(r){ return r.json(); }),
+      fetch(SUPA_URL+'/rest/v1/tips_public?list_slug=eq.'+encodeURIComponent(slug)+'&select=item_name,amount', { headers:h }).then(function(r){ return r.json(); }).catch(function(){ return []; })
+    ]).then(function(res){
+      var rows = res[0], tips = res[1] || [];
       if(!rows || !rows.length){ showState('リストが見つかりません', 'リンクが変更・削除された可能性があります。'); return; }
-      render(rows[0].data || {});
+      render(rows[0].data || {}, tips);
     })
     .catch(function(){ showState('読み込みに失敗しました', '通信環境を確認して再度お試しください。'); });
   }
