@@ -131,6 +131,8 @@
       <button class="amount" data-amt="30000">¥30,000</button>
     </div>
     <div class="custom" id="customWrap"><span>¥</span><input id="customAmt" inputmode="numeric" placeholder="自由に入力"></div>
+    <div class="flabel">お名前（任意）</div>
+    <input class="msg" id="supName" placeholder="ニックネーム">
     <div class="flabel">メッセージ（任意）</div>
     <textarea class="msg" id="msg" rows="2" placeholder="応援メッセージを添える…"></textarea>
     <button class="confirm" id="confirm">¥1,000 を応援する</button>
@@ -211,7 +213,7 @@
       '</header>'+
       '<main class="items">'+items+'</main>'+
       '<footer><div class="mark">ほしいもの</div>'+
-      '<div class="note">物欲と向き合い、本当に大切なものを見極めるためのリスト。<br>※応援（決済）機能は準備中です。</div></footer>';
+      '<div class="note">物欲と向き合い、本当に大切なものを見極めるためのリスト。<br>※現在はテスト環境です（実際の課金は行われません）。</div></footer>';
 
     bindSupport();
     bindShare();
@@ -236,12 +238,13 @@
   var amounts=document.getElementById('amounts'), customWrap=document.getElementById('customWrap');
   var customAmt=document.getElementById('customAmt'), confirmBtn=document.getElementById('confirm');
   var sheetItem=document.getElementById('sheetItem'), msg=document.getElementById('msg');
+  var nameInput=document.getElementById('supName');
   var current=1000, curItem='', chips=Array.prototype.slice.call(amounts.children);
   function updateConfirm(){ confirmBtn.textContent = yen(current)+' を応援する'; }
   function toastShow(t){ toast.textContent=t; toast.classList.add('show'); clearTimeout(timer); timer=setTimeout(function(){toast.classList.remove('show');},2800); }
   function openSheet(name){
     curItem=name; sheetItem.textContent='「'+name+'」を応援する';
-    current=1000; customAmt.value=''; customWrap.classList.remove('sel'); msg.value='';
+    current=1000; customAmt.value=''; customWrap.classList.remove('sel'); msg.value=''; nameInput.value='';
     chips.forEach(function(b){ b.classList.toggle('sel', b.getAttribute('data-amt')==='1000'); });
     updateConfirm(); scrim.classList.add('open'); sheet.classList.add('open'); document.body.style.overflow='hidden';
   }
@@ -264,11 +267,29 @@
   });
   confirmBtn.addEventListener('click', function(){
     if(!current || current<100){ toastShow('¥100以上を選んでください'); return; }
-    var m=msg.value.trim(); closeSheet();
-    toastShow('「'+curItem+'」に '+yen(current)+' を応援'+(m?'（メッセージ付き）':'')+' — 準備中です 🙏');
+    var slug = new URLSearchParams(location.search).get('slug');
+    if(!slug){ toastShow('リストが特定できません'); return; }
+    confirmBtn.disabled = true; confirmBtn.textContent = '処理中…';
+    fetch(SUPA_URL + '/functions/v1/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', apikey:KEY, Authorization:'Bearer '+KEY },
+      body: JSON.stringify({
+        slug: slug, item_name: curItem, amount: current,
+        message: msg.value.trim(), supporter_name: nameInput.value.trim()
+      })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d && d.url){ location.href = d.url; }
+      else { toastShow((d && d.error) ? d.error : 'エラーが発生しました'); confirmBtn.disabled=false; updateConfirm(); }
+    })
+    .catch(function(){ toastShow('通信に失敗しました'); confirmBtn.disabled=false; updateConfirm(); });
   });
 
   load();
+  if(new URLSearchParams(location.search).get('thanks')){
+    setTimeout(function(){ toastShow('応援ありがとうございました！ 🙏'); }, 900);
+  }
 </script>
 </body>
 </html>
