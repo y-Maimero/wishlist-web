@@ -74,6 +74,8 @@
     cursor:pointer; background:var(--accent); color:var(--on-accent); border:0; padding:12px 20px; border-radius:8px}
   .support .amt{font-weight:600; opacity:.8; font-size:12.5px}
   .support:active{transform:translateY(1px)}
+  .support[disabled]{background:transparent; color:var(--muted); border:1px solid var(--line); cursor:default}
+  .support[disabled]:active{transform:none}
 
   footer{padding-top:36px; text-align:center; color:var(--muted)}
   footer .mark{font-family:var(--serif); font-size:15px; color:var(--ink)}
@@ -214,7 +216,9 @@
         (it.story ? '<p class="story">'+esc(it.story).replace(/\n/g,'<br>')+'</p>' : '')+
         (/^https?:\/\//.test(it.url||'') ? '<a class="rowlink" href="'+esc(it.url)+'" target="_blank" rel="noopener noreferrer">商品ページ ↗</a><br>' : '')+
         gauge+
-        '<button class="support" data-item="'+esc(it.name)+'">この一点を応援する <span class="amt">¥500〜</span></button>'+
+        (accepting
+          ? '<button class="support" data-item="'+esc(it.name)+'">この一点を応援する <span class="amt">¥500〜</span></button>'
+          : '<button class="support" disabled>応援の受付は準備中です</button>')+
       '</article>';
     }).join('');
 
@@ -227,8 +231,10 @@
           '<div class="who"><span class="name">'+esc(d.owner||'匿名')+'</span>'+
           (d.handle ? '<span class="handle">'+esc(d.handle)+'</span>' : '')+'</div></div>'+
         (d.intro ? '<p class="lede">'+esc(d.intro).replace(/\n/g,'<br>')+'</p>' : '')+
-        '<div class="explain">このリストは <b>¥500</b> から、メッセージを添えて応援できます。集まったぶんは、その一点のために。'+
-          (accepting ? '' : '<br><br>※ このリストの持ち主はまだ受け取り設定を終えていません。いま応援いただいた分は運営がお預かりし、設定の完了後にお届けします。')+
+        '<div class="explain">'+
+          (accepting
+            ? 'このリストは <b>¥500</b> から、メッセージを添えて応援できます。集まったぶんは、その一点のために。<br><br>応援は持ち主の口座に直接お届けします（決済は Stripe、手数料 10%）。'
+            : 'このリストは現在、応援を受け付けていません。持ち主が受け取りの準備を終えると応援できるようになります。')+
         '</div>'+
         shareBar(d)+
       '</header>'+
