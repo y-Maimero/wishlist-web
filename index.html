@@ -190,7 +190,7 @@
       '<div class="state"><div class="big">'+esc(big)+'</div>'+(small?esc(small):'')+'</div>';
   }
 
-  function render(d, tips){
+  function render(d, tips, accepting){
     tips = tips || [];
     var agg = {};
     tips.forEach(function(t){
@@ -227,7 +227,9 @@
           '<div class="who"><span class="name">'+esc(d.owner||'匿名')+'</span>'+
           (d.handle ? '<span class="handle">'+esc(d.handle)+'</span>' : '')+'</div></div>'+
         (d.intro ? '<p class="lede">'+esc(d.intro).replace(/\n/g,'<br>')+'</p>' : '')+
-        '<div class="explain">このリストは <b>¥500</b> から、メッセージを添えて応援できます。集まったぶんは、その一点のために。</div>'+
+        '<div class="explain">このリストは <b>¥500</b> から、メッセージを添えて応援できます。集まったぶんは、その一点のために。'+
+          (accepting ? '' : '<br><br>※ このリストの持ち主はまだ受け取り設定を終えていません。いま応援いただいた分は運営がお預かりし、設定の完了後にお届けします。')+
+        '</div>'+
         shareBar(d)+
       '</header>'+
       '<main class="items">'+items+'</main>'+
@@ -238,17 +240,30 @@
     bindShare();
   }
 
+  /** slug を引数で渡す RPC を叩く。失敗しても表示は続けたいので fallback を返す。 */
+  function rpc(name, slug, fallback){
+    return fetch(SUPA_URL+'/rest/v1/rpc/'+name, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', apikey:KEY, Authorization:'Bearer '+KEY },
+      body: JSON.stringify({ p_slug: slug })
+    }).then(function(r){ return r.ok ? r.json() : fallback; })
+      .catch(function(){ return fallback; });
+  }
+
   function load(){
     var slug = new URLSearchParams(location.search).get('slug');
     if(!slug){ showState('リストが指定されていません', 'アプリから公開したリンクを開いてください。'); return; }
     var h = { apikey:KEY, Authorization:'Bearer '+KEY };
     Promise.all([
       fetch(SUPA_URL+'/rest/v1/public_lists?slug=eq.'+encodeURIComponent(slug)+'&select=data', { headers:h }).then(function(r){ return r.json(); }),
-      fetch(SUPA_URL+'/rest/v1/tips_public?list_slug=eq.'+encodeURIComponent(slug)+'&select=item_name,amount', { headers:h }).then(function(r){ return r.json(); }).catch(function(){ return []; })
+      // 集計と受け取り可否は RPC で取る。ビュー（tips_public）を直接読ませると
+      // anon が list_slug を全件引けてしまい、slug が漏れて他人のリストが読めるため。
+      rpc('list_tips', slug, []),
+      rpc('list_accepting', slug, false)
     ]).then(function(res){
-      var rows = res[0], tips = res[1] || [];
+      var rows = res[0], tips = res[1] || [], accepting = res[2] === true;
       if(!rows || !rows.length){ showState('リストが見つかりません', 'リンクが変更・削除された可能性があります。'); return; }
-      render(rows[0].data || {}, tips);
+      render(rows[0].data || {}, tips, accepting);
     })
     .catch(function(){ showState('読み込みに失敗しました', '通信環境を確認して再度お試しください。'); });
   }
