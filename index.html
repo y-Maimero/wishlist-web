@@ -80,6 +80,9 @@
   footer{padding-top:36px; text-align:center; color:var(--muted)}
   footer .mark{font-family:var(--serif); font-size:15px; color:var(--ink)}
   footer .note{font-size:11.5px; margin-top:8px; line-height:1.7}
+  footer .legal{display:flex; flex-wrap:wrap; justify-content:center; gap:8px 18px; margin-top:14px}
+  footer .legal a{font-size:11.5px; color:var(--muted); text-decoration:none; border-bottom:1px solid var(--line)}
+  footer .legal a:hover{color:var(--ink)}
 
   .sharebar{margin-top:18px}
   .sharelabel{font-size:11px; font-weight:600; letter-spacing:.12em; color:var(--muted); display:block; margin-bottom:8px}
@@ -111,6 +114,8 @@
   .confirm{width:100%; font-family:var(--sans); font-size:15px; font-weight:700; cursor:pointer; background:var(--accent);
     color:var(--on-accent); border:0; padding:16px; border-radius:10px}
   .confirm:active{transform:translateY(1px)}
+  .terms-note{font-size:11px; line-height:1.75; color:var(--muted); margin:12px 0 0}
+  .terms-note a{color:var(--muted)}
   .toast{position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--bg);
     font-size:13px; font-weight:600; padding:12px 18px; border-radius:999px; opacity:0; pointer-events:none;
     transition:opacity .25s, transform .25s; z-index:50; max-width:88vw; text-align:center}
@@ -143,6 +148,11 @@
     <div class="flabel">メッセージ（任意）</div>
     <textarea class="msg" id="msg" rows="2" placeholder="応援メッセージを添える…"></textarea>
     <button class="confirm" id="confirm">¥1,000 を応援する</button>
+    <p class="terms-note">
+      応援は決済完了後のキャンセル・返金ができません。応援額の 10% がプラットフォーム手数料となり、
+      残りは持ち主の口座に直接お支払いします。お進みになると
+      <a href="terms.html" target="_blank" rel="noopener">利用規約</a>・<a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意したものとみなします。
+    </p>
   </div>
   <div class="toast" id="toast"></div>
 
@@ -240,6 +250,11 @@
       '</header>'+
       '<main class="items">'+items+'</main>'+
       '<footer><div class="mark">ほしいもの</div>'+
+      '<div class="legal">'+
+        '<a href="tokushoho.html">特定商取引法に基づく表記</a>'+
+        '<a href="terms.html">利用規約</a>'+
+        '<a href="privacy.html">プライバシーポリシー</a>'+
+      '</div>'+
       '<div class="note">物欲と向き合い、本当に大切なものを見極めるためのリスト。<br>※現在はテスト環境です（実際の課金は行われません）。</div></footer>';
 
     bindSupport();
