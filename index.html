@@ -149,8 +149,8 @@
     <textarea class="msg" id="msg" rows="2" placeholder="応援メッセージを添える…"></textarea>
     <button class="confirm" id="confirm">¥1,000 を応援する</button>
     <p class="terms-note">
-      応援は決済完了後のキャンセル・返金ができません。応援額の 10% がプラットフォーム手数料となり、
-      残りは持ち主の口座に直接お支払いします。お進みになると
+      応援は決済完了後のキャンセル・返金ができません。当方は手数料をいただきません。
+      応援額は持ち主の口座に直接お支払いします。お進みになると
       <a href="terms.html" target="_blank" rel="noopener">利用規約</a>・<a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意したものとみなします。
     </p>
   </div>
@@ -243,7 +243,7 @@
         (d.intro ? '<p class="lede">'+esc(d.intro).replace(/\n/g,'<br>')+'</p>' : '')+
         '<div class="explain">'+
           (accepting
-            ? 'このリストは <b>¥500</b> から、メッセージを添えて応援できます。集まったぶんは、その一点のために。<br><br>応援は持ち主の口座に直接お届けします（決済は Stripe、手数料 10%）。'
+            ? 'このリストは <b>¥500</b> から、メッセージを添えて応援できます。集まったぶんは、その一点のために。<br><br>応援は持ち主の口座に直接お届けします（決済は Stripe。当方の手数料はありません）。'
             : 'このリストは現在、応援を受け付けていません。持ち主が受け取りの準備を終えると応援できるようになります。')+
         '</div>'+
         shareBar(d)+
